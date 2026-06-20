@@ -9,7 +9,19 @@ const sendResponse = require('../utils/apiResponse');
 
 exports.getLeaveTypes = async (req, res, next) => {
   try {
-    const types = await LeaveType.find({});
+    let types = await LeaveType.find({});
+    
+    // Fail-safe: Dynamically seed default leave types if they don't exist in the database
+    if (types.length === 0) {
+      await LeaveType.create([
+        { name: 'Annual Leave', defaultDays: 15, carryForward: true, isPaid: true },
+        { name: 'Sick Leave', defaultDays: 10, carryForward: false, isPaid: true },
+        { name: 'Casual Leave', defaultDays: 7, carryForward: false, isPaid: true },
+        { name: 'Unpaid Leave', defaultDays: 30, carryForward: false, isPaid: false },
+      ]);
+      types = await LeaveType.find({});
+    }
+
     return sendResponse(res, 200, true, 'Leave types retrieved successfully', types);
   } catch (error) {
     next(error);
