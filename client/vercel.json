@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://hrm-management-backend.onrender.com/api/:path*"
+      "destination": "https://hr-backend-l37p.onrender.com/api/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://hrm-management-backend.onrender.com/uploads/:path*"
+      "destination": "https://hr-backend-l37p.onrender.com/uploads/:path*"
     },
     {
       "source": "/:path*",
