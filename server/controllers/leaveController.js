@@ -150,7 +150,23 @@ exports.applyLeave = async (req, res, next) => {
 
     // Check balance
     const currentYear = start.getFullYear();
-    const balance = await LeaveBalance.findOne({ employeeId, leaveTypeId, year: currentYear });
+    let balance = await LeaveBalance.findOne({ employeeId, leaveTypeId, year: currentYear });
+    
+    // Dynamically seed leave balances if they don't exist for this employee
+    if (!balance) {
+      const types = await LeaveType.find({});
+      for (const t of types) {
+        await LeaveBalance.create({
+          employeeId,
+          leaveTypeId: t._id,
+          year: currentYear,
+          allocated: t.defaultDays,
+          remaining: t.defaultDays,
+        }).catch(() => {});
+      }
+      balance = await LeaveBalance.findOne({ employeeId, leaveTypeId, year: currentYear });
+    }
+
     if (!balance || balance.remaining < totalDays) {
       return sendResponse(res, 400, false, 'Insufficient leave balance for this request');
     }

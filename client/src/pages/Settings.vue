@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useSettingsStore } from '../stores/settings';
 import { useEmployeeStore } from '../stores/employee';
+import { useLeaveStore } from '../stores/leave';
 import { useToast } from '../composables/useToast';
 import HrmButton from '../components/ui/HrmButton.vue';
 import HrmModal from '../components/ui/HrmModal.vue';
@@ -10,11 +11,16 @@ import { Settings, Save, Plus, HelpCircle, Edit3, Trash2 } from 'lucide-vue-next
 
 const settingsStore = useSettingsStore();
 const employeeStore = useEmployeeStore();
+const leaveStore = useLeaveStore();
 const { addToast } = useToast();
 
 const showDeptModal = ref(false);
 const isEditingDept = ref(false);
 const editingDeptId = ref(null);
+
+const showLeaveTypeModal = ref(false);
+const isEditingLeaveType = ref(false);
+const editingLeaveTypeId = ref(null);
 
 // Settings Form
 const settingsForm = ref({ name: 'HRM Systems', timezone: 'UTC', currency: 'USD' });
@@ -23,8 +29,12 @@ const logoFile = ref(null);
 // Department Form
 const deptForm = ref({ name: '', headId: '', parentDept: '' });
 
+// Leave Type Form
+const leaveTypeForm = ref({ name: '', defaultDays: 15, carryForward: false, isPaid: true, requiresDoc: false });
+
 const companySettings = computed(() => settingsStore.companySettings);
 const departments = computed(() => settingsStore.departments);
+const leaveTypes = computed(() => leaveStore.leaveTypes);
 const employees = computed(() => employeeStore.employees);
 const isLoading = computed(() => settingsStore.isLoading);
 
@@ -39,6 +49,7 @@ const loadSettingsData = async () => {
   }
   await settingsStore.fetchDepartments();
   await employeeStore.fetchEmployees({ limit: 100 });
+  await leaveStore.fetchLeaveTypes();
 };
 
 const handleLogoChange = (e) => {
@@ -103,6 +114,54 @@ const handleDeleteDept = async (id) => {
   if (result.success) {
     addToast('Department deleted successfully.', 'success');
     settingsStore.fetchDepartments();
+  } else {
+    addToast(result.message, 'error');
+  }
+};
+
+const openAddLeaveType = () => {
+  isEditingLeaveType.value = false;
+  editingLeaveTypeId.value = null;
+  leaveTypeForm.value = { name: '', defaultDays: 15, carryForward: false, isPaid: true, requiresDoc: false };
+  showLeaveTypeModal.value = true;
+};
+
+const openEditLeaveType = (type) => {
+  isEditingLeaveType.value = true;
+  editingLeaveTypeId.value = type._id;
+  leaveTypeForm.value = {
+    name: type.name,
+    defaultDays: type.defaultDays,
+    carryForward: type.carryForward,
+    isPaid: type.isPaid,
+    requiresDoc: type.requiresDoc || false,
+  };
+  showLeaveTypeModal.value = true;
+};
+
+const submitLeaveTypeForm = async () => {
+  let result;
+  if (isEditingLeaveType.value) {
+    result = await leaveStore.updateLeaveType(editingLeaveTypeId.value, leaveTypeForm.value);
+  } else {
+    result = await leaveStore.createLeaveType(leaveTypeForm.value);
+  }
+
+  if (result.success) {
+    addToast(`Leave category ${isEditingLeaveType.value ? 'updated' : 'created'} successfully!`, 'success');
+    showLeaveTypeModal.value = false;
+    leaveStore.fetchLeaveTypes();
+  } else {
+    addToast(result.message, 'error');
+  }
+};
+
+const handleDeleteLeaveType = async (id) => {
+  if (!confirm('Are you sure you want to delete this leave category?')) return;
+  const result = await leaveStore.deleteLeaveType(id);
+  if (result.success) {
+    addToast('Leave category deleted successfully.', 'success');
+    leaveStore.fetchLeaveTypes();
   } else {
     addToast(result.message, 'error');
   }
@@ -173,36 +232,72 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Department CRUD Workspace (Right column) -->
-      <div class="lg:col-span-2 p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-md font-bold text-white">Department Structures</h3>
-          <HrmButton variant="primary" @click="openAddDept">
-            <Plus class="w-4 h-4" />
-            Create Department
-          </HrmButton>
+      <!-- Department & Leave Category CRUD Workspaces (Right column) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Departments Card -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-md font-bold text-white">Department Structures</h3>
+            <HrmButton variant="primary" @click="openAddDept">
+              <Plus class="w-4 h-4" />
+              Create Department
+            </HrmButton>
+          </div>
+
+          <HrmTable :headers="['Name', 'Department Head', 'Parent Department', 'Actions']" :items="departments" :isLoading="isLoading">
+            <template #row="{ item }">
+              <td class="px-6 py-3.5 text-xs font-bold text-slate-100">{{ item.name }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-300">
+                {{ item.headId ? `${item.headId.firstName} ${item.headId.lastName}` : '--' }}
+                <span class="block text-[10px] text-slate-500 font-mono mt-0.5" v-if="item.headId">{{ item.headId.employeeCode }}</span>
+              </td>
+              <td class="px-6 py-3.5 text-xs text-slate-400">{{ item.parentDept ? item.parentDept.name : '--' }}</td>
+              <td class="px-6 py-3.5">
+                <div class="flex items-center gap-2">
+                  <button @click="openEditDept(item)" class="text-xs text-slate-400 hover:text-white p-1 hover:bg-brand-border rounded cursor-pointer" title="Edit">
+                    <Edit3 class="w-4 h-4" />
+                  </button>
+                  <button @click="handleDeleteDept(item._id)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer" title="Delete">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </template>
+          </HrmTable>
         </div>
 
-        <HrmTable :headers="['Name', 'Department Head', 'Parent Department', 'Actions']" :items="departments" :isLoading="isLoading">
-          <template #row="{ item }">
-            <td class="px-6 py-3.5 text-xs font-bold text-slate-100">{{ item.name }}</td>
-            <td class="px-6 py-3.5 text-xs text-slate-300">
-              {{ item.headId ? `${item.headId.firstName} ${item.headId.lastName}` : '--' }}
-              <span class="block text-[10px] text-slate-500 font-mono mt-0.5" v-if="item.headId">{{ item.headId.employeeCode }}</span>
-            </td>
-            <td class="px-6 py-3.5 text-xs text-slate-400">{{ item.parentDept ? item.parentDept.name : '--' }}</td>
-            <td class="px-6 py-3.5">
-              <div class="flex items-center gap-2">
-                <button @click="openEditDept(item)" class="text-xs text-slate-400 hover:text-white p-1 hover:bg-brand-border rounded cursor-pointer" title="Edit">
-                  <Edit3 class="w-4 h-4" />
-                </button>
-                <button @click="handleDeleteDept(item._id)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer" title="Delete">
-                  <Trash2 class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </template>
-        </HrmTable>
+        <!-- Leave Categories Card -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-md font-bold text-white">Leave Categories</h3>
+            <HrmButton variant="purple" @click="openAddLeaveType">
+              <Plus class="w-4 h-4" />
+              Create Category
+            </HrmButton>
+          </div>
+
+          <HrmTable :headers="['Name', 'Default Allocation', 'Type', 'Carry Forward', 'Requires Doc', 'Actions']" :items="leaveTypes">
+            <template #row="{ item }">
+              <td class="px-6 py-3.5 text-xs font-bold text-slate-100">{{ item.name }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-300 font-mono">{{ item.defaultDays }} days</td>
+              <td class="px-6 py-3.5 text-xs text-slate-400 font-semibold font-mono">
+                <HrmBadge :status="item.isPaid ? 'present' : 'absent'" :customLabel="item.isPaid ? 'Paid' : 'Unpaid'" />
+              </td>
+              <td class="px-6 py-3.5 text-xs text-slate-400 font-mono">{{ item.carryForward ? 'Yes' : 'No' }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-400 font-mono">{{ item.requiresDoc ? 'Yes' : 'No' }}</td>
+              <td class="px-6 py-3.5">
+                <div class="flex items-center gap-2">
+                  <button @click="openEditLeaveType(item)" class="text-xs text-slate-400 hover:text-white p-1 hover:bg-brand-border rounded cursor-pointer" title="Edit">
+                    <Edit3 class="w-4 h-4" />
+                  </button>
+                  <button @click="handleDeleteLeaveType(item._id)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer" title="Delete">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </template>
+          </HrmTable>
+        </div>
       </div>
 
     </div>
@@ -234,6 +329,43 @@ onMounted(() => {
         <div class="pt-4 flex justify-end gap-3 border-t border-brand-border/40">
           <HrmButton type="button" variant="secondary" @click="showDeptModal = false">Cancel</HrmButton>
           <HrmButton type="submit" variant="primary">Save Department</HrmButton>
+        </div>
+      </form>
+    </HrmModal>
+
+    <!-- Create/Edit Leave Category Modal -->
+    <HrmModal :show="showLeaveTypeModal" :title="isEditingLeaveType ? 'Modify Leave Category' : 'Create Leave Category'" @close="showLeaveTypeModal = false" maxWidth="max-w-sm">
+      <form @submit.prevent="submitLeaveTypeForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Category Name</label>
+          <input type="text" v-model="leaveTypeForm.name" required placeholder="e.g. Parental Leave" class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Default Days Allocated</label>
+          <input type="number" v-model="leaveTypeForm.defaultDays" required class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white" />
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="isPaid" v-model="leaveTypeForm.isPaid" class="rounded bg-black border-brand-border text-brand-blue cursor-pointer" />
+            <label for="isPaid" class="text-xs text-slate-400 cursor-pointer select-none">Is Paid Leave</label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="carryForward" v-model="leaveTypeForm.carryForward" class="rounded bg-black border-brand-border text-brand-blue cursor-pointer" />
+            <label for="carryForward" class="text-xs text-slate-400 cursor-pointer select-none">Carry Forward unused days</label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="requiresDoc" v-model="leaveTypeForm.requiresDoc" class="rounded bg-black border-brand-border text-brand-blue cursor-pointer" />
+            <label for="requiresDoc" class="text-xs text-slate-400 cursor-pointer select-none">Requires supporting document</label>
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3 border-t border-brand-border/40">
+          <HrmButton type="button" variant="secondary" @click="showLeaveTypeModal = false">Cancel</HrmButton>
+          <HrmButton type="submit" variant="primary">Save Category</HrmButton>
         </div>
       </form>
     </HrmModal>

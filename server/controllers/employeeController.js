@@ -263,22 +263,23 @@ exports.updateEmployee = async (req, res, next) => {
       if (joiningDate) {
         employee.joiningDate = joiningDate;
       }
+    }
 
-      // Update associated user's name if first/last name changed
-      if (employee.userId) {
-        const user = await User.findById(employee.userId);
-        if (user) {
-          user.name = `${employee.firstName} ${employee.lastName}`;
-          if (email && email !== user.email) {
-            // Validate new email is unique
-            const emailInUse = await User.findOne({ email, _id: { $ne: user._id } });
-            if (emailInUse) {
-              return sendResponse(res, 400, false, 'Email is already in use by another user');
-            }
-            user.email = email;
+    // Update associated user's name if first/last name changed
+    if (employee.userId) {
+      const user = await User.findById(employee.userId);
+      if (user) {
+        user.name = `${employee.firstName} ${employee.lastName}`;
+        // Only allow email change if requested by Admin/HR
+        if (!isSelf && isHrOrAdmin && email && email !== user.email) {
+          // Validate new email is unique
+          const emailInUse = await User.findOne({ email, _id: { $ne: user._id } });
+          if (emailInUse) {
+            return sendResponse(res, 400, false, 'Email is already in use by another user');
           }
-          await user.save();
+          user.email = email;
         }
+        await user.save();
       }
     }
 

@@ -168,6 +168,10 @@ exports.downloadPayslip = async (req, res, next) => {
       return sendResponse(res, 404, false, 'Payroll record not found');
     }
 
+    if (!payroll.employeeId) {
+      return sendResponse(res, 404, false, 'Associated employee profile not found');
+    }
+
     // Permissions: Admin, HR Manager, or the employee themselves
     const isSelf = req.user.employeeId && req.user.employeeId.toString() === payroll.employeeId._id.toString();
     const isHrOrAdmin = ['Super Admin', 'HR Manager'].includes(req.user.role);
