@@ -156,8 +156,9 @@ exports.applyLeave = async (req, res, next) => {
     if (isHalfDay === 'true' || isHalfDay === true) {
       totalDays = 0.5;
     } else {
-      const diffTime = Math.abs(end - start);
-      totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      const utcStart = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+      const utcEnd = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+      totalDays = Math.round((utcEnd - utcStart) / (1000 * 60 * 60 * 24)) + 1;
     }
 
     // Check balance
