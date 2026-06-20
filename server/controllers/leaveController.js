@@ -190,7 +190,12 @@ exports.applyLeave = async (req, res, next) => {
     });
 
     await leaveRequest.save();
-    return sendResponse(res, 201, true, 'Leave requested successfully', leaveRequest);
+
+    const populatedRequest = await LeaveRequest.findById(leaveRequest._id)
+      .populate('leaveTypeId', 'name')
+      .populate('employeeId', 'firstName lastName employeeCode department designation');
+
+    return sendResponse(res, 201, true, 'Leave requested successfully', populatedRequest);
   } catch (error) {
     next(error);
   }
