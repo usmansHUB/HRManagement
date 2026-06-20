@@ -140,6 +140,11 @@ exports.getLogs = async (req, res, next) => {
 exports.getMonthlySummary = async (req, res, next) => {
   try {
     const employeeId = req.query.employeeId || req.user.employeeId;
+
+    if (employeeId && employeeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager', 'Department Manager'].includes(req.user.role)) {
+      return sendResponse(res, 403, false, 'Forbidden: You cannot view attendance details of other employees');
+    }
+
     const year = parseInt(req.query.year || new Date().getFullYear());
     const month = parseInt(req.query.month || new Date().getMonth() + 1); // 1-12
 

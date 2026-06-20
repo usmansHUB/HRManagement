@@ -12,6 +12,9 @@ exports.getGoals = async (req, res, next) => {
     const query = {};
 
     if (employeeId) {
+      if (employeeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager', 'Department Manager'].includes(req.user.role)) {
+        return sendResponse(res, 403, false, 'Forbidden: You cannot view goals of other employees');
+      }
       query.employeeId = employeeId;
     } else if (req.user.role === 'Employee') {
       // Employees only view their own goals
@@ -151,6 +154,9 @@ exports.getReviews = async (req, res, next) => {
     if (cycleId) query.cycleId = cycleId;
     
     if (revieweeId) {
+      if (revieweeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager', 'Department Manager'].includes(req.user.role)) {
+        return sendResponse(res, 403, false, 'Forbidden: You cannot view performance reviews of other employees');
+      }
       query.revieweeId = revieweeId;
     } else if (req.user.role === 'Employee') {
       // Employees only view self reviews
@@ -208,6 +214,11 @@ exports.submitReview = async (req, res, next) => {
 exports.getReviewSummary = async (req, res, next) => {
   try {
     const employeeId = req.params.employeeId;
+
+    if (employeeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager', 'Department Manager'].includes(req.user.role)) {
+      return sendResponse(res, 403, false, 'Forbidden: You cannot view rating summary of other employees');
+    }
+
     const reviews = await Review.find({ revieweeId: employeeId });
 
     if (reviews.length === 0) {

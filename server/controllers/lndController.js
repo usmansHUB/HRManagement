@@ -78,6 +78,9 @@ exports.getAssignments = async (req, res, next) => {
     const query = {};
 
     if (employeeId) {
+      if (employeeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager', 'Department Manager'].includes(req.user.role)) {
+        return sendResponse(res, 403, false, 'Forbidden: You cannot view assignments of other employees');
+      }
       query.employeeId = employeeId;
     } else if (req.user.role === 'Employee') {
       query.employeeId = req.user.employeeId;

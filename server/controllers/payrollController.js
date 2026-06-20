@@ -132,6 +132,9 @@ exports.getPayrollHistory = async (req, res, next) => {
     const query = {};
 
     if (employeeId) {
+      if (employeeId.toString() !== req.user.employeeId?.toString() && !['Super Admin', 'HR Manager'].includes(req.user.role)) {
+        return sendResponse(res, 403, false, 'Forbidden: You cannot view payroll details of other employees');
+      }
       query.employeeId = employeeId;
     } else if (req.user.role === 'Employee') {
       // Employees only see their own payslips
