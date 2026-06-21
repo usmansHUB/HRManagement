@@ -58,4 +58,7 @@ const LeaveRequestSchema = new mongoose.Schema({
   },
 });
 
+// Indexes
+LeaveRequestSchema.index({ employeeId: 1 });
+
 module.exports = mongoose.model('LeaveRequest', LeaveRequestSchema);

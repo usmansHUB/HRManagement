@@ -44,4 +44,7 @@ const ApplicantSchema = new mongoose.Schema({
   },
 });
 
+// Indexes
+ApplicantSchema.index({ jobId: 1 });
+
 module.exports = mongoose.model('Applicant', ApplicantSchema);

@@ -45,4 +45,7 @@ const GoalSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Indexes
+GoalSchema.index({ employeeId: 1 });
+
 module.exports = mongoose.model('Goal', GoalSchema);

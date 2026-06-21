@@ -81,4 +81,7 @@ const EmployeeSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Indexes
+EmployeeSchema.index({ userId: 1 });
+
 module.exports = mongoose.model('Employee', EmployeeSchema);

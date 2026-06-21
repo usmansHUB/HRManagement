@@ -3,7 +3,6 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useToast } from '../composables/useToast';
-import ParticlesBg from '../components/three/ParticlesBg.vue';
 import HrmButton from '../components/ui/HrmButton.vue';
 
 const router = useRouter();
@@ -63,83 +62,74 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="relative min-h-screen flex items-center justify-center p-4">
-    <!-- Starfield particles backdrop -->
-    <ParticlesBg />
+  <div>
+    <div class="text-center mb-6">
+      <p class="text-slate-400 text-xs font-mono uppercase tracking-widest">Sign In to Dashboard</p>
+    </div>
 
-    <!-- Login Glassmorphic card -->
-    <div class="w-full max-w-md p-8 glass-panel border border-brand-border/60 rounded-2xl shadow-2xl relative z-10">
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-extrabold text-white tracking-tight flex items-center justify-center gap-2 select-none">
-          🌌 HRM Portal
-        </h1>
-        <p class="text-slate-400 text-xs mt-1 font-mono uppercase tracking-widest">Sign In to Dashboard</p>
+    <form @submit.prevent="handleLogin" class="space-y-6">
+      <!-- Email Input -->
+      <div class="relative">
+        <input
+          id="email"
+          type="email"
+          v-model="email"
+          @focus="emailFocused = true"
+          @blur="emailFocused = false"
+          class="w-full px-3 py-3 rounded-lg border bg-black/20 text-white outline-none border-brand-border/80 focus:border-brand-blue/80 transition duration-150 text-sm pt-5 pb-1.5"
+          :class="[emailError ? 'border-rose-500 focus:border-rose-500' : '']"
+          autocomplete="email"
+        />
+        <label
+          for="email"
+          class="absolute left-3 top-3.5 transition-all duration-200 pointer-events-none text-slate-500 origin-[0_0] text-sm select-none"
+          :class="[emailFocused || email ? 'transform -translate-y-2.5 scale-75 text-brand-blue' : '']"
+        >
+          Email Address
+        </label>
+        <span v-if="emailError" class="text-rose-500 text-[11px] mt-1 block absolute left-1">{{ emailError }}</span>
       </div>
 
-      <form @submit.prevent="handleLogin" class="space-y-6">
-        <!-- Email Input -->
-        <div class="relative">
-          <input
-            id="email"
-            type="email"
-            v-model="email"
-            @focus="emailFocused = true"
-            @blur="emailFocused = false"
-            class="w-full px-3 py-3 rounded-lg border bg-black/20 text-white outline-none border-brand-border/80 focus:border-brand-blue/80 transition duration-150 text-sm pt-5 pb-1.5"
-            :class="[emailError ? 'border-rose-500 focus:border-rose-500' : '']"
-            autocomplete="email"
-          />
-          <label
-            for="email"
-            class="absolute left-3 top-3.5 transition-all duration-200 pointer-events-none text-slate-500 origin-[0_0] text-sm select-none"
-            :class="[emailFocused || email ? 'transform -translate-y-2.5 scale-75 text-brand-blue' : '']"
-          >
-            Email Address
-          </label>
-          <span v-if="emailError" class="text-rose-500 text-[11px] mt-1 block absolute left-1">{{ emailError }}</span>
-        </div>
-
-        <!-- Password Input -->
-        <div class="relative pt-2">
-          <input
-            id="password"
-            type="password"
-            v-model="password"
-            @focus="passFocused = true"
-            @blur="passFocused = false"
-            class="w-full px-3 py-3 rounded-lg border bg-black/20 text-white outline-none border-brand-border/80 focus:border-brand-blue/80 transition duration-150 text-sm pt-5 pb-1.5"
-            :class="[passError ? 'border-rose-500 focus:border-rose-500' : '']"
-            autocomplete="current-password"
-          />
-          <label
-            for="password"
-            class="absolute left-3 top-5.5 transition-all duration-200 pointer-events-none text-slate-500 origin-[0_0] text-sm select-none"
-            :class="[passFocused || password ? 'transform -translate-y-2.5 scale-75 text-brand-blue' : '']"
-          >
-            Password
-          </label>
-          <span v-if="passError" class="text-rose-500 text-[11px] mt-1 block absolute left-1">{{ passError }}</span>
-        </div>
-
-        <!-- Links -->
-        <div class="flex items-center justify-between text-xs pt-1">
-          <router-link to="/forgot-password" class="text-brand-purple hover:underline">Forgot password?</router-link>
-          <span class="text-slate-400">
-            No account? <router-link to="/register" class="text-brand-blue hover:underline">Register</router-link>
-          </span>
-        </div>
-
-        <!-- Submit Button -->
-        <HrmButton
-          type="submit"
-          variant="primary"
-          class="w-full py-3"
-          :disabled="isLoading"
+      <!-- Password Input -->
+      <div class="relative pt-2">
+        <input
+          id="password"
+          type="password"
+          v-model="password"
+          @focus="passFocused = true"
+          @blur="passFocused = false"
+          class="w-full px-3 py-3 rounded-lg border bg-black/20 text-white outline-none border-brand-border/80 focus:border-brand-blue/80 transition duration-150 text-sm pt-5 pb-1.5"
+          :class="[passError ? 'border-rose-500 focus:border-rose-500' : '']"
+          autocomplete="current-password"
+        />
+        <label
+          for="password"
+          class="absolute left-3 top-5.5 transition-all duration-200 pointer-events-none text-slate-500 origin-[0_0] text-sm select-none"
+          :class="[passFocused || password ? 'transform -translate-y-2.5 scale-75 text-brand-blue' : '']"
         >
-          <span v-if="isLoading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          <span v-else>Sign In</span>
-        </HrmButton>
-      </form>
-    </div>
+          Password
+        </label>
+        <span v-if="passError" class="text-rose-500 text-[11px] mt-1 block absolute left-1">{{ passError }}</span>
+      </div>
+
+      <!-- Links -->
+      <div class="flex items-center justify-between text-xs pt-1">
+        <router-link to="/forgot-password" class="text-brand-purple hover:underline">Forgot password?</router-link>
+        <span class="text-slate-400">
+          No account? <router-link to="/register" class="text-brand-blue hover:underline">Register</router-link>
+        </span>
+      </div>
+
+      <!-- Submit Button -->
+      <HrmButton
+        type="submit"
+        variant="primary"
+        class="w-full py-3"
+        :disabled="isLoading"
+      >
+        <span v-if="isLoading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        <span v-else>Sign In</span>
+      </HrmButton>
+    </form>
   </div>
 </template>

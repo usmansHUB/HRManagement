@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const compression = require('compression');
 const connectDB = require('./config/db');
 const initCronJobs = require('./jobs/cronJobs');
 const errorHandler = require('./middleware/errorHandler');
@@ -23,6 +24,9 @@ const settingsRoutes = require('./routes/settingsRoutes');
 // Initialize app
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Enable gzip compression for all routes
+app.use(compression());
 
 // Connect to Database
 connectDB();

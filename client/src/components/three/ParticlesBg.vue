@@ -131,9 +131,13 @@ onMounted(() => {
       // 2. Vector distance to cursor position
       const dx = initialPositions[i] - intersects.x;
       const dy = initialPositions[i + 1] - intersects.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      // Perform a distance-squared pre-check to avoid Math.sqrt, Math.atan2, and trig math for 99% of particles
+      const distSq = dx * dx + dy * dy;
+      const rLimitSq = rLimit * rLimit;
 
-      if (dist < rLimit) {
+      if (distSq < rLimitSq) {
+        const dist = Math.sqrt(distSq);
         // Push particles outwards along the direction vector
         const angle = Math.atan2(dy, dx);
         const forceFactor = (rLimit - dist) / rLimit; // stronger close to mouse
