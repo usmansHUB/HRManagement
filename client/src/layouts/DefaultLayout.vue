@@ -43,6 +43,7 @@ const pageTitle = computed(() => {
   const name = route.name || '';
   const titles = {
     Dashboard: 'Dashboard',
+    Directory: 'Colleague Directory',
     Employees: 'Employees',
     EmployeeProfile: 'Employee Profile',
     Attendance: 'Attendance & Leaves',
@@ -61,6 +62,7 @@ const pageTitle = computed(() => {
 const menuItems = computed(() => {
   const items = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
+    { name: 'Colleague Directory', path: '/directory', icon: Users, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Employees', path: '/employees', icon: Users, roles: ['Super Admin', 'HR Manager', 'Department Manager'] },
     { name: 'Attendance & Leaves', path: '/attendance', icon: Calendar, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Weekly Timesheets', path: '/timesheets', icon: Clock, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },

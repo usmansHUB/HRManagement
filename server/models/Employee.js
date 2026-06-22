@@ -87,6 +87,40 @@ const EmployeeSchema = new mongoose.Schema({
     relationship: String,
     dob: Date,
   }],
+  qualifications: {
+    skills: [{
+      name: String,
+      yearsOfExperience: Number,
+      comments: String,
+    }],
+    education: [{
+      level: String,
+      institute: String,
+      major: String,
+      year: Number,
+      gpa: String,
+    }],
+    languages: [{
+      name: String,
+      fluency: {
+        type: String,
+        enum: ['Basic', 'Intermediate', 'Fluent'],
+      },
+    }],
+  },
+  salaryDetails: {
+    basicSalary: { type: Number, default: 0 },
+    payGrade: { type: String, default: '' },
+    bankName: { type: String, default: '' },
+    accountNumber: { type: String, default: '' },
+    taxPercentage: { type: Number, default: 0 },
+  },
+  immigration: {
+    passportNumber: { type: String, default: '' },
+    passportExpiry: { type: Date },
+    visaNumber: { type: String, default: '' },
+    visaExpiry: { type: Date },
+  },
 }, {
   timestamps: true,
 });

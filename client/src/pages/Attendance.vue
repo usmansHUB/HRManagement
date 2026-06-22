@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useAttendanceStore } from '../stores/attendance';
 import { useLeaveStore } from '../stores/leave';
+import { useEmployeeStore } from '../stores/employee';
 import { useToast } from '../composables/useToast';
 import { useGsap } from '../composables/useGsap';
 import { formatDate, formatLocalDate } from '../utils/date';
@@ -10,16 +11,18 @@ import HrmButton from '../components/ui/HrmButton.vue';
 import HrmModal from '../components/ui/HrmModal.vue';
 import HrmTable from '../components/ui/HrmTable.vue';
 import HrmBadge from '../components/ui/HrmBadge.vue';
-import { Calendar, Clock, FileText, Send, UserCheck, CalendarRange, Eye } from 'lucide-vue-next';
+import { Calendar, Clock, FileText, Send, UserCheck, CalendarRange, Eye, Sliders } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const attendanceStore = useAttendanceStore();
 const leaveStore = useLeaveStore();
+const employeeStore = useEmployeeStore();
 const { addToast } = useToast();
 const { animateRowStagger } = useGsap();
 
 const userRole = computed(() => authStore.userRole);
 const isEmployee = computed(() => authStore.isRegularEmployee);
+const employees = computed(() => employeeStore.employees);
 
 const activeTab = ref('attendance'); // 'attendance' | 'leaves' | 'approvals'
 
@@ -45,6 +48,27 @@ const leaveAttachment = ref(null);
 const selectedRequest = ref(null);
 const resolveStatus = ref('approved'); // 'approved' | 'rejected'
 const resolveComment = ref('');
+
+// Manual Adjustment state
+const adjustForm = ref({
+  employeeId: '',
+  leaveTypeId: '',
+  allocated: 15
+});
+
+const submitAdjustment = async () => {
+  if (!adjustForm.value.employeeId || !adjustForm.value.leaveTypeId) {
+    return addToast('Please select an employee and leave category.', 'error');
+  }
+  const result = await leaveStore.adjustLeaveBalance(adjustForm.value);
+  if (result.success) {
+    addToast('Employee leave balance adjusted successfully!', 'success');
+    adjustForm.value = { employeeId: '', leaveTypeId: '', allocated: 15 };
+    await leaveStore.fetchLeaveRequests();
+  } else {
+    addToast(result.message, 'error');
+  }
+};
 
 // Calendar Heatmap configuration
 const monthDays = ref([]);
@@ -179,6 +203,9 @@ onMounted(() => {
   leaveStore.fetchLeaveRequests();
   leaveStore.fetchTeamCalendar();
   leaveStore.fetchAbsenteeismReport();
+  if (userRole.value !== 'Employee') {
+    employeeStore.fetchEmployees({ limit: 100 });
+  }
 
   timerInterval = setInterval(() => {
     systemTime.value = new Date().toLocaleTimeString();
@@ -394,36 +421,81 @@ watch(logs, () => {
         </div>
       </div>
 
-      <!-- Pending leaves list -->
-      <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
-        <h3 class="text-md font-bold text-white mb-6">Pending Leave Applications</h3>
-        
-        <HrmTable :headers="['Employee', 'Leave Category', 'Date Period', 'Total Days', 'Attachment', 'Actions']" :items="leaveRequests.filter(r => r.status === 'pending')">
-          <template #row="{ item }">
-            <td class="px-6 py-3">
-              <div class="text-xs font-semibold text-white">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
-              <span class="text-[10px] text-slate-500 font-mono">{{ item.employeeId?.employeeCode }}</span>
-            </td>
-            <td class="px-6 py-3 text-xs">{{ item.leaveTypeId?.name }}</td>
-            <td class="px-6 py-3 text-xs font-mono text-slate-400">
-              {{ formatDate(item.startDate) }} - {{ formatDate(item.endDate) }}
-            </td>
-            <td class="px-6 py-3 text-xs font-mono font-bold text-slate-300">{{ item.totalDays }} days</td>
-            <td class="px-6 py-3">
-              <a v-if="item.attachmentUrl" :href="item.attachmentUrl" target="_blank" class="text-brand-purple hover:underline text-xs flex items-center gap-1">
-                <FileText class="w-3.5 h-3.5" />
-                View File
-              </a>
-              <span v-else class="text-slate-600 text-xs">None</span>
-            </td>
-            <td class="px-6 py-3">
-              <HrmButton variant="primary" class="py-1 px-3 text-xs" @click="openResolveModal(item)">
-                <UserCheck class="w-3.5 h-3.5" />
-                Process
+      <!-- HR Tools Layout: Adjustments + Pending Applications -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Manual Balance Adjustment Card -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel flex flex-col justify-between">
+          <div>
+            <h3 class="text-md font-bold text-white mb-1.5 flex items-center gap-2">
+              <Sliders class="w-5 h-5 text-brand-blue" />
+              Adjust Leave Balance
+            </h3>
+            <p class="text-slate-400 text-xs mb-6">Manually assign or override an employee's leave entitlement allocation.</p>
+
+            <form @submit.prevent="submitAdjustment" class="space-y-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">Select Employee</label>
+                <select v-model="adjustForm.employeeId" required class="w-full bg-[#0E1322] border border-brand-border text-white text-xs px-3 py-2.5 rounded-lg outline-none cursor-pointer focus:border-brand-blue">
+                  <option value="">Select Employee</option>
+                  <option v-for="emp in employees" :key="emp._id" :value="emp._id">
+                    {{ emp.firstName }} {{ emp.lastName }} ({{ emp.employeeCode }})
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">Leave Category</label>
+                <select v-model="adjustForm.leaveTypeId" required class="w-full bg-[#0E1322] border border-brand-border text-white text-xs px-3 py-2.5 rounded-lg outline-none cursor-pointer focus:border-brand-blue">
+                  <option value="">Select Category</option>
+                  <option v-for="type in leaveTypes" :key="type._id" :value="type._id">
+                    {{ type.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 font-mono">New Allocated Days</label>
+                <input type="number" min="0" max="100" v-model="adjustForm.allocated" required class="w-full bg-[#0E1322] border border-brand-border text-white text-xs px-3 py-2.5 rounded-lg outline-none focus:border-brand-blue" />
+              </div>
+
+              <HrmButton type="submit" variant="primary" class="w-full py-2.5 mt-2">
+                Save Adjustment
               </HrmButton>
-            </td>
-          </template>
-        </HrmTable>
+            </form>
+          </div>
+        </div>
+
+        <!-- Pending leaves list (Span 2) -->
+        <div class="lg:col-span-2 p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
+          <h3 class="text-md font-bold text-white mb-6">Pending Leave Applications</h3>
+          
+          <HrmTable :headers="['Employee', 'Leave Category', 'Date Period', 'Total Days', 'Attachment', 'Actions']" :items="leaveRequests.filter(r => r.status === 'pending')">
+            <template #row="{ item }">
+              <td class="px-6 py-3">
+                <div class="text-xs font-semibold text-white">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
+                <span class="text-[10px] text-slate-500 font-mono">{{ item.employeeId?.employeeCode }}</span>
+              </td>
+              <td class="px-6 py-3 text-xs">{{ item.leaveTypeId?.name }}</td>
+              <td class="px-6 py-3 text-xs font-mono text-slate-400 font-semibold">
+                {{ formatDate(item.startDate) }} - {{ formatDate(item.endDate) }}
+              </td>
+              <td class="px-6 py-3 text-xs font-mono font-bold text-slate-300">{{ item.totalDays }} days</td>
+              <td class="px-6 py-3">
+                <a v-if="item.attachmentUrl" :href="item.attachmentUrl" target="_blank" class="text-brand-purple hover:underline text-xs flex items-center gap-1">
+                  <FileText class="w-3.5 h-3.5" />
+                  View File
+                </a>
+                <span v-else class="text-slate-600 text-xs">None</span>
+              </td>
+              <td class="px-6 py-3">
+                <HrmButton variant="primary" class="py-1 px-3 text-xs" @click="openResolveModal(item)">
+                  <UserCheck class="w-3.5 h-3.5" />
+                  Process
+                </HrmButton>
+              </td>
+            </template>
+          </HrmTable>
+        </div>
       </div>
 
       <!-- Weekly Calendar view -->

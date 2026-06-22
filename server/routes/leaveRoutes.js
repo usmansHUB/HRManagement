@@ -16,6 +16,7 @@ router.delete('/types/:id', checkRole(['Super Admin', 'HR Manager']), leaveContr
 
 // Balances
 router.get('/balances', leaveController.getLeaveBalances);
+router.post('/balances/adjust', checkRole(['Super Admin', 'HR Manager']), leaveController.adjustLeaveBalance);
 
 // Requests CRUD and Actions
 router.get('/requests', leaveController.getLeaveRequests);

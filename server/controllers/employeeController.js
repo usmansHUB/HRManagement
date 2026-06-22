@@ -232,6 +232,9 @@ exports.updateEmployee = async (req, res, next) => {
       email,
       emergencyContacts,
       dependents,
+      qualifications,
+      salaryDetails,
+      immigration,
     } = req.body;
 
     // Self-update is restricted
@@ -243,6 +246,14 @@ exports.updateEmployee = async (req, res, next) => {
       employee.dob = dob || employee.dob;
       employee.gender = gender || employee.gender;
       employee.address = address || employee.address;
+
+      if (qualifications !== undefined) {
+        try {
+          employee.qualifications = typeof qualifications === 'string' ? JSON.parse(qualifications || '{}') : qualifications;
+        } catch (e) {
+          console.error("Error parsing qualifications:", e);
+        }
+      }
     } else {
       // Admin/HR Full updates
       employee.firstName = firstName || employee.firstName;
@@ -264,6 +275,28 @@ exports.updateEmployee = async (req, res, next) => {
       }
       if (joiningDate) {
         employee.joiningDate = joiningDate;
+      }
+
+      if (qualifications !== undefined) {
+        try {
+          employee.qualifications = typeof qualifications === 'string' ? JSON.parse(qualifications || '{}') : qualifications;
+        } catch (e) {
+          console.error("Error parsing qualifications:", e);
+        }
+      }
+      if (salaryDetails !== undefined) {
+        try {
+          employee.salaryDetails = typeof salaryDetails === 'string' ? JSON.parse(salaryDetails || '{}') : salaryDetails;
+        } catch (e) {
+          console.error("Error parsing salaryDetails:", e);
+        }
+      }
+      if (immigration !== undefined) {
+        try {
+          employee.immigration = typeof immigration === 'string' ? JSON.parse(immigration || '{}') : immigration;
+        } catch (e) {
+          console.error("Error parsing immigration:", e);
+        }
       }
     }
 
@@ -471,6 +504,38 @@ exports.exportCsv = async (req, res, next) => {
     res.header('Content-Type', 'text/csv');
     res.attachment('employees.csv');
     return res.send(csvString);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/employees/directory
+exports.getEmployeeDirectory = async (req, res, next) => {
+  try {
+    const { search, department } = req.query;
+    const query = { status: 'active' };
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query.$or = [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { employeeCode: searchRegex },
+        { designation: searchRegex },
+      ];
+    }
+
+    if (department) {
+      query.department = department;
+    }
+
+    const directory = await Employee.find(query)
+      .select('firstName lastName avatar employeeCode designation department phone userId')
+      .populate('department', 'name')
+      .populate('userId', 'email')
+      .sort({ firstName: 1 });
+
+    return sendResponse(res, 200, true, 'Directory fetched successfully', directory);
   } catch (error) {
     next(error);
   }

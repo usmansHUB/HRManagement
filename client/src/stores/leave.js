@@ -146,5 +146,17 @@ export const useLeaveStore = defineStore('leave', {
         console.error('Error fetching absenteeism report:', error);
       }
     },
+
+    async adjustLeaveBalance(payload) {
+      try {
+        const { data } = await api.post('/leave/balances/adjust', payload);
+        return { success: true, data: data.data };
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to adjust leave balance.',
+        };
+      }
+    },
   },
 });

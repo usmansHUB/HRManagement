@@ -65,11 +65,13 @@ export const useEmployeeStore = defineStore('employee', {
       }
     },
 
-    async updateEmployee(id, formData) {
+    async updateEmployee(id, payload) {
       try {
-        const { data } = await api.put(`/employees/${id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        const headers = {};
+        if (payload instanceof FormData) {
+          headers['Content-Type'] = 'multipart/form-data';
+        }
+        const { data } = await api.put(`/employees/${id}`, payload, { headers });
         return { success: true, data: data.data };
       } catch (error) {
         return {
@@ -104,6 +106,20 @@ export const useEmployeeStore = defineStore('employee', {
           success: false,
           message: error.response?.data?.message || 'CSV Bulk Import failed.',
         };
+      }
+    },
+
+    async fetchEmployeeDirectory(params = {}) {
+      this.isLoading = true;
+      try {
+        const { data } = await api.get('/employees/directory', { params });
+        if (data.success) {
+          this.employees = data.data;
+        }
+      } catch (error) {
+        console.error('Error fetching employee directory:', error);
+      } finally {
+        this.isLoading = false;
       }
     },
   },

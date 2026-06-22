@@ -355,3 +355,34 @@ exports.getAbsenteeismReport = async (req, res, next) => {
     next(error);
   }
 };
+
+// POST /api/leave/balances/adjust
+exports.adjustLeaveBalance = async (req, res, next) => {
+  try {
+    const { employeeId, leaveTypeId, allocated } = req.body;
+    const year = new Date().getFullYear();
+
+    let balance = await LeaveBalance.findOne({ employeeId, leaveTypeId, year });
+    if (!balance) {
+      balance = new LeaveBalance({
+        employeeId,
+        leaveTypeId,
+        year,
+        allocated,
+        remaining: allocated,
+        used: 0,
+      });
+    } else {
+      const difference = allocated - balance.allocated;
+      balance.allocated = allocated;
+      balance.remaining = balance.remaining + difference;
+    }
+
+    await balance.save();
+    const populated = await LeaveBalance.findById(balance._id).populate('leaveTypeId');
+
+    return sendResponse(res, 200, true, 'Leave balance adjusted successfully', populated);
+  } catch (error) {
+    next(error);
+  }
+};

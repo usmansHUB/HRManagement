@@ -53,6 +53,11 @@ const router = createRouter({
           component: () => import('../pages/Dashboard.vue'),
         },
         {
+          path: 'directory',
+          name: 'Directory',
+          component: () => import('../pages/Directory.vue'),
+        },
+        {
           path: 'employees',
           name: 'Employees',
           component: () => import('../pages/Employees.vue'),

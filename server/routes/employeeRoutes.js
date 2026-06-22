@@ -15,6 +15,7 @@ router.get(
 );
 
 router.get('/org-chart', employeeController.getOrgChart);
+router.get('/directory', employeeController.getEmployeeDirectory);
 
 router.get(
   '/export/csv',
