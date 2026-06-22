@@ -131,6 +131,60 @@ const triggerPayslipDownload = async (id) => {
   }
 };
 
+const localHistory = ref([]);
+const editingHistoryRowId = ref(null);
+
+watch(payrollHistory, (newVal) => {
+  if (newVal) {
+    localHistory.value = newVal.map(item => {
+      const basicSalary = item.basicSalary || 0;
+      const allowancesTotal = (item.allowances || []).reduce((acc, a) => acc + (a.amount || 0), 0);
+      const deductionsTotal = (item.deductions || []).reduce((acc, d) => acc + (d.amount || 0), 0);
+      const taxAmount = item.taxAmount || 0;
+      return {
+        ...item,
+        basicSalary,
+        allowancesTotal,
+        deductionsTotal,
+        taxAmount
+      };
+    });
+  } else {
+    localHistory.value = [];
+  }
+}, { immediate: true });
+
+const cancelHistoryEdit = () => {
+  editingHistoryRowId.value = null;
+  payrollStore.fetchPayrollHistory();
+};
+
+const executeHistorySave = async (item) => {
+  try {
+    const payload = {
+      month: item.month,
+      year: item.year,
+      payrolls: [{
+        employeeId: item.employeeId._id,
+        basicSalary: item.basicSalary,
+        allowances: [{ name: 'Allowances', amount: item.allowancesTotal || 0 }],
+        deductions: [{ name: 'Deductions', amount: item.deductionsTotal || 0 }],
+        taxAmount: item.taxAmount || 0,
+      }]
+    };
+    const result = await payrollStore.processPayroll(payload);
+    if (result.success) {
+      addToast(`Payslip for ${item.employeeId.firstName} updated successfully!`, 'success');
+      editingHistoryRowId.value = null;
+      payrollStore.fetchPayrollHistory();
+    } else {
+      addToast(result.message, 'error');
+    }
+  } catch (err) {
+    addToast('Failed to save payslip.', 'error');
+  }
+};
+
 onMounted(async () => {
   loadPayrollData();
   if (!authStore.companySettings) {
@@ -281,23 +335,79 @@ onMounted(async () => {
     <div v-else class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
       <h3 class="text-md font-bold text-white mb-6">Historical Slips</h3>
 
-      <HrmTable :headers="['Employee', 'Period', 'Basic Salary', 'Tax Deductions', 'Net Pay Outflow', 'Action']" :items="payrollHistory" :isLoading="isLoading">
+      <HrmTable :headers="['Employee', 'Period', 'Basic Salary', 'Allowances', 'Deductions', 'Tax Deductions', 'Net Pay Outflow', 'Action']" :items="localHistory" :isLoading="isLoading">
         <template #row="{ item }">
           <td class="px-6 py-3.5">
-            <div class="text-xs font-semibold text-white">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
+            <div class="text-xs font-semibold text-white leading-none mb-1">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
             <span class="text-[9px] text-slate-500 font-mono block mt-0.5">{{ item.employeeId?.employeeCode }}</span>
           </td>
           <td class="px-6 py-3.5 text-xs font-mono">
             {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][item.month - 1] }} {{ item.year }}
           </td>
-          <td class="px-6 py-3.5 text-xs font-mono">{{ currencySymbol }}{{ (item.basicSalary || 0).toLocaleString() }}</td>
-          <td class="px-6 py-3.5 text-xs font-mono text-rose-400">{{ currencySymbol }}{{ (item.taxAmount || 0).toLocaleString() }}</td>
-          <td class="px-6 py-3.5 text-xs font-mono font-bold text-brand-blue">{{ currencySymbol }}{{ Math.round(item.netPay || 0).toLocaleString() }}</td>
+          <td class="px-6 py-3.5 text-xs font-mono">
+            <div v-if="editingHistoryRowId === item._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[140px]">
+              <button type="button" @click="item.basicSalary = Math.max(0, item.basicSalary - 5000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+              <input type="number" v-model.number="item.basicSalary" class="w-12 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+              <button type="button" @click="item.basicSalary = item.basicSalary + 5000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
+            </div>
+            <span v-else>{{ currencySymbol }}{{ (item.basicSalary || 0).toLocaleString() }}</span>
+          </td>
+          <td class="px-6 py-3.5 text-xs font-mono text-slate-300">
+            <div v-if="editingHistoryRowId === item._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+              <button type="button" @click="item.allowancesTotal = Math.max(0, item.allowancesTotal - 1000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+              <input type="number" v-model.number="item.allowancesTotal" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+              <button type="button" @click="item.allowancesTotal = item.allowancesTotal + 1000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
+            </div>
+            <span v-else>{{ currencySymbol }}{{ (item.allowancesTotal || 0).toLocaleString() }}</span>
+          </td>
+          <td class="px-6 py-3.5 text-xs font-mono text-slate-400">
+            <div v-if="editingHistoryRowId === item._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+              <button type="button" @click="item.deductionsTotal = Math.max(0, item.deductionsTotal - 1000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+              <input type="number" v-model.number="item.deductionsTotal" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+              <button type="button" @click="item.deductionsTotal = item.deductionsTotal + 1000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
+            </div>
+            <span v-else>{{ currencySymbol }}{{ (item.deductionsTotal || 0).toLocaleString() }}</span>
+          </td>
+          <td class="px-6 py-3.5 text-xs font-mono text-rose-400">
+            <div v-if="editingHistoryRowId === item._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+              <button type="button" @click="item.taxAmount = Math.max(0, item.taxAmount - 500)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+              <input type="number" v-model.number="item.taxAmount" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+              <button type="button" @click="item.taxAmount = item.taxAmount + 500" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
+            </div>
+            <span v-else>{{ currencySymbol }}{{ (item.taxAmount || 0).toLocaleString() }}</span>
+          </td>
+          <td class="px-6 py-3.5 text-xs font-mono font-bold text-brand-blue">
+            {{ currencySymbol }}{{ Math.round(item.basicSalary + item.allowancesTotal - item.deductionsTotal - item.taxAmount).toLocaleString() }}
+          </td>
           <td class="px-6 py-3.5">
-            <HrmButton variant="secondary" class="py-1 px-3 text-xs" @click="triggerPayslipDownload(item._id)">
-              <FileText class="w-3.5 h-3.5 text-brand-purple" />
-              Payslip PDF
-            </HrmButton>
+            <div class="flex items-center gap-2">
+              <div v-if="editingHistoryRowId === item._id" class="flex items-center gap-1.5">
+                <button 
+                  @click="executeHistorySave(item)" 
+                  class="text-[10px] text-emerald-400 hover:text-emerald-300 px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded cursor-pointer font-bold transition font-mono"
+                >
+                  Save
+                </button>
+                <button 
+                  @click="cancelHistoryEdit" 
+                  class="text-[10px] text-slate-400 hover:text-slate-300 px-2 py-1 bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/20 rounded cursor-pointer font-bold transition font-mono"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div v-else class="flex items-center gap-1.5">
+                <button 
+                  @click="editingHistoryRowId = item._id" 
+                  class="text-[10px] text-brand-blue hover:text-blue-400 px-2.5 py-1 bg-brand-blue/10 hover:bg-brand-blue/20 border border-brand-blue/20 rounded cursor-pointer font-bold transition"
+                >
+                  Edit Slip
+                </button>
+                <HrmButton variant="secondary" class="py-1 px-3 text-xs" @click="triggerPayslipDownload(item._id)">
+                  <FileText class="w-3.5 h-3.5 text-brand-purple" />
+                  PDF
+                </HrmButton>
+              </div>
+            </div>
           </td>
         </template>
       </HrmTable>
