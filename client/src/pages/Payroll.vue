@@ -210,30 +210,34 @@ onMounted(async () => {
               <span class="text-[9px] text-slate-500 font-mono block">{{ item.employeeId?.employeeCode }}</span>
             </td>
             <td class="px-6 py-3.5 text-xs font-mono">
-              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
-                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
-                <input type="number" v-model.number="item.basicSalary" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[140px]">
+                <button type="button" @click="item.basicSalary = Math.max(0, item.basicSalary - 5000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+                <input type="number" v-model.number="item.basicSalary" class="w-12 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+                <button type="button" @click="item.basicSalary = item.basicSalary + 5000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
               </div>
               <span v-else>{{ currencySymbol }}{{ (item.basicSalary || 0).toLocaleString() }}</span>
             </td>
             <td class="px-6 py-3.5 text-xs font-mono text-slate-300">
-              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
-                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
-                <input type="number" v-model.number="item.allowancesTotal" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+                <button type="button" @click="item.allowancesTotal = Math.max(0, item.allowancesTotal - 1000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+                <input type="number" v-model.number="item.allowancesTotal" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+                <button type="button" @click="item.allowancesTotal = item.allowancesTotal + 1000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
               </div>
               <span v-else>{{ currencySymbol }}{{ (item.allowancesTotal || 0).toLocaleString() }}</span>
             </td>
             <td class="px-6 py-3.5 text-xs font-mono text-slate-400">
-              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
-                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
-                <input type="number" v-model.number="item.deductionsTotal" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+                <button type="button" @click="item.deductionsTotal = Math.max(0, item.deductionsTotal - 1000)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+                <input type="number" v-model.number="item.deductionsTotal" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+                <button type="button" @click="item.deductionsTotal = item.deductionsTotal + 1000" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
               </div>
               <span v-else>{{ currencySymbol }}{{ (item.deductionsTotal || 0).toLocaleString() }}</span>
             </td>
             <td class="px-6 py-3.5 text-xs font-mono text-rose-400/90">
-              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
-                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
-                <input type="number" v-model.number="item.taxAmount" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              <div v-if="editingRowId === item.employeeId._id" class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-1.5 py-0.5 max-w-[120px]">
+                <button type="button" @click="item.taxAmount = Math.max(0, item.taxAmount - 500)" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">-</button>
+                <input type="number" v-model.number="item.taxAmount" class="w-10 text-center bg-transparent text-[11px] text-white outline-none border-none p-0 focus:ring-0 font-bold" />
+                <button type="button" @click="item.taxAmount = item.taxAmount + 500" class="text-[10px] text-slate-400 hover:text-white px-1 bg-brand-border/30 rounded select-none font-extrabold cursor-pointer">+</button>
               </div>
               <span v-else>{{ currencySymbol }}{{ (item.taxAmount || 0).toLocaleString() }}</span>
             </td>
