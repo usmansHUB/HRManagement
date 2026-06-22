@@ -91,12 +91,6 @@ exports.processPayroll = async (req, res, next) => {
     const processedItems = [];
 
     for (const item of payrolls) {
-      // Enforce that already paid payroll cannot be overwritten or edited
-      const existingPaid = await Payroll.findOne({ employeeId: item.employeeId, month, year, status: 'paid' });
-      if (existingPaid) {
-        return sendResponse(res, 400, false, `Payroll for period ${month}/${year} has already been paid and cannot be edited.`);
-      }
-
       // Allowances & deductions validation
       const allowances = item.allowances || [];
       const deductions = item.deductions || [];

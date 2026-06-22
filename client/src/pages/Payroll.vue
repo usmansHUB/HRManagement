@@ -38,25 +38,46 @@ watch([activeTab, selectedMonth, selectedYear], () => {
   loadPayrollData();
 });
 
+const localPayrolls = ref([]);
+
+watch(draftPayrolls, (newVal) => {
+  if (newVal) {
+    localPayrolls.value = newVal.map(item => {
+      const basicSalary = item.basicSalary || 0;
+      const allowancesTotal = (item.allowances || []).reduce((acc, a) => acc + (a.amount || 0), 0);
+      const deductionsTotal = (item.deductions || []).reduce((acc, d) => acc + (d.amount || 0), 0);
+      const taxAmount = item.taxAmount || 0;
+      return {
+        ...item,
+        basicSalary,
+        allowancesTotal,
+        deductionsTotal,
+        taxAmount
+      };
+    });
+  } else {
+    localPayrolls.value = [];
+  }
+}, { immediate: true });
+
 const executePayrollRun = async () => {
-  if (draftPayrolls.value.length === 0) return addToast('No employees found to process', 'warning');
-  if (draftPayrolls.value[0]?.status === 'paid') return addToast('Payroll has already been processed for this period', 'info');
+  if (localPayrolls.value.length === 0) return addToast('No employees found to process', 'warning');
 
   const payload = {
     month: selectedMonth.value,
     year: selectedYear.value,
-    payrolls: draftPayrolls.value.map(item => ({
+    payrolls: localPayrolls.value.map(item => ({
       employeeId: item.employeeId._id,
       basicSalary: item.basicSalary,
-      allowances: item.allowances,
-      deductions: item.deductions,
-      taxAmount: item.taxAmount,
+      allowances: [{ name: 'Allowances', amount: item.allowancesTotal || 0 }],
+      deductions: [{ name: 'Deductions', amount: item.deductionsTotal || 0 }],
+      taxAmount: item.taxAmount || 0,
     })),
   };
 
   const result = await payrollStore.processPayroll(payload);
   if (result.success) {
-    addToast('Payroll processed successfully! Slips are now generated.', 'success');
+    addToast('Payroll processed successfully! Slips are now generated/updated.', 'success');
     loadPayrollData();
   } else {
     addToast(result.message, 'error');
@@ -123,16 +144,18 @@ onMounted(async () => {
           </select>
         </div>
 
-        <HrmButton 
-          v-if="draftPayrolls.length > 0 && draftPayrolls[0]?.status !== 'paid'"
-          variant="primary" 
-          @click="executePayrollRun"
-        >
-          <CheckCircle2 class="w-4 h-4" />
-          Approve & Run Payroll
-        </HrmButton>
-        <div v-else-if="draftPayrolls.length > 0 && draftPayrolls[0]?.status === 'paid'" class="flex items-center gap-2 text-emerald-400 text-xs font-semibold px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-          ✓ Paid & Closed for this Period
+        <div class="flex items-center gap-3">
+          <div v-if="draftPayrolls.length > 0 && draftPayrolls[0]?.status === 'paid'" class="text-emerald-400 text-xs font-semibold px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center gap-1 font-mono">
+            ✓ Status: Paid
+          </div>
+          <HrmButton 
+            v-if="draftPayrolls.length > 0"
+            variant="primary" 
+            @click="executePayrollRun"
+          >
+            <CheckCircle2 class="w-4 h-4" />
+            {{ draftPayrolls[0]?.status === 'paid' ? 'Update & Save Payroll' : 'Approve & Run Payroll' }}
+          </HrmButton>
         </div>
       </div>
 
@@ -143,21 +166,39 @@ onMounted(async () => {
           <span class="text-xs text-slate-400 font-mono">Month: {{ selectedMonth }}/{{ selectedYear }}</span>
         </div>
 
-        <HrmTable :headers="['Employee', 'Base Pay', 'Allowances', 'Deductions', 'Income Tax', 'Net Pay', 'Status']" :items="draftPayrolls" :isLoading="isLoading">
+        <HrmTable :headers="['Employee', 'Base Pay', 'Allowances', 'Deductions', 'Income Tax', 'Net Pay', 'Status']" :items="localPayrolls" :isLoading="isLoading">
           <template #row="{ item }">
             <td class="px-6 py-3.5">
-              <div class="text-xs font-semibold text-white">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
-              <span class="text-[10px] text-slate-500 font-mono">{{ item.employeeId?.employeeCode }}</span>
+              <div class="text-xs font-semibold text-white leading-none mb-1">{{ item.employeeId?.firstName }} {{ item.employeeId?.lastName }}</div>
+              <span class="text-[9px] text-slate-500 font-mono block">{{ item.employeeId?.employeeCode }}</span>
             </td>
-            <td class="px-6 py-3.5 text-xs font-mono">{{ currencySymbol }}{{ (item.basicSalary || 0).toLocaleString() }}</td>
-            <td class="px-6 py-3.5 text-xs font-mono text-slate-300">
-              {{ currencySymbol }}{{ (item.allowances || []).reduce((acc, a) => acc + (a.amount || 0), 0).toLocaleString() }}
+            <td class="px-6 py-3.5 text-xs font-mono">
+              <div class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
+                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
+                <input type="number" v-model.number="item.basicSalary" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              </div>
             </td>
-            <td class="px-6 py-3.5 text-xs font-mono text-slate-400">
-              {{ currencySymbol }}{{ (item.deductions || []).reduce((acc, d) => acc + (d.amount || 0), 0).toLocaleString() }}
+            <td class="px-6 py-3.5 text-xs font-mono">
+              <div class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
+                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
+                <input type="number" v-model.number="item.allowancesTotal" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              </div>
             </td>
-            <td class="px-6 py-3.5 text-xs font-mono text-rose-400/90">{{ currencySymbol }}{{ (item.taxAmount || 0).toLocaleString() }}</td>
-            <td class="px-6 py-3.5 text-xs font-mono font-bold text-brand-blue">{{ currencySymbol }}{{ Math.round(item.netPay || 0).toLocaleString() }}</td>
+            <td class="px-6 py-3.5 text-xs font-mono">
+              <div class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
+                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
+                <input type="number" v-model.number="item.deductionsTotal" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              </div>
+            </td>
+            <td class="px-6 py-3.5 text-xs font-mono">
+              <div class="flex items-center gap-1 bg-[#0E1322] border border-brand-border/60 rounded px-2 py-1 max-w-[120px]">
+                <span class="text-[9px] text-slate-500 font-bold select-none">{{ currencySymbol.trim() }}</span>
+                <input type="number" v-model.number="item.taxAmount" class="w-full bg-transparent text-xs text-white outline-none border-none p-0 focus:ring-0" />
+              </div>
+            </td>
+            <td class="px-6 py-3.5 text-xs font-mono font-bold text-brand-blue">
+              {{ currencySymbol }}{{ Math.round(item.basicSalary + item.allowancesTotal - item.deductionsTotal - item.taxAmount).toLocaleString() }}
+            </td>
             <td class="px-6 py-3.5"><HrmBadge :status="item.status || 'draft'" /></td>
           </template>
         </HrmTable>
