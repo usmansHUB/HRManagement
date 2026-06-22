@@ -17,8 +17,8 @@ const printer = new PdfPrinter(fonts);
  * @param {Object} payroll Payroll mongoose model object
  * @returns {PDFKit.PDFDocument} PDF document stream
  */
-const generatePayslipPdf = (payroll, currency = 'PKR') => {
-  const currencySymbol = currency === 'PKR' ? 'Rs. ' : (currency === 'USD' ? '$' : currency + ' ');
+const generatePayslipPdf = (payroll) => {
+  const currencySymbol = 'Rs. ';
   const employee = payroll.employeeId;
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',

@@ -11,17 +11,7 @@ import { User, Phone, MapPin, Calendar, FileText, Lock, Save } from 'lucide-vue-
 const authStore = useAuthStore();
 const { addToast } = useToast();
 
-const currencySymbol = computed(() => {
-  const currency = authStore.companySettings?.currency || 'PKR';
-  const symbolMap = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    JPY: '¥',
-    PKR: 'Rs. '
-  };
-  return symbolMap[currency] || (currency + ' ');
-});
+const currencySymbol = 'Rs. ';
 
 const employeeId = computed(() => authStore.user?.employeeId);
 const user = computed(() => authStore.user);

@@ -12,17 +12,7 @@ const payrollStore = usePayrollStore();
 const authStore = useAuthStore();
 const { addToast } = useToast();
 
-const currencySymbol = computed(() => {
-  const currency = authStore.companySettings?.currency || 'PKR';
-  const symbolMap = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    JPY: '¥',
-    PKR: 'Rs. '
-  };
-  return symbolMap[currency] || (currency + ' ');
-});
+const currencySymbol = 'Rs. ';
 
 const activeTab = ref('run'); // 'run' | 'history'
 

@@ -26,17 +26,7 @@ const claimForm = ref({
 
 const isHrOrAdmin = computed(() => ['Super Admin', 'HR Manager'].includes(authStore.userRole));
 
-const currencySymbol = computed(() => {
-  const currency = authStore.companySettings?.currency || 'PKR';
-  const symbolMap = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    JPY: '¥',
-    PKR: 'Rs. '
-  };
-  return symbolMap[currency] || (currency + ' ');
-});
+const currencySymbol = 'Rs. ';
 
 const fetchExpenses = async () => {
   isLoading.value = true;

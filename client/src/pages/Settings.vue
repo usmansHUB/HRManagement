@@ -240,13 +240,7 @@ onMounted(() => {
 
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1.5 font-mono">Default Currency Code</label>
-              <select v-model="settingsForm.currency" class="w-full bg-[#0E1322] border border-brand-border rounded px-3 py-2 text-sm text-white focus:border-brand-blue outline-none cursor-pointer">
-                <option value="PKR">PKR (Pakistani Rupee, ₨)</option>
-                <option value="USD">USD (United States Dollar, $)</option>
-                <option value="EUR">EUR (Euro, €)</option>
-                <option value="GBP">GBP (British Pound, £)</option>
-                <option value="JPY">JPY (Japanese Yen, ¥)</option>
-              </select>
+              <input type="text" value="PKR (Pakistani Rupee, Rs.)" disabled class="w-full bg-[#0E1322]/50 border border-brand-border/40 rounded px-3 py-2 text-sm text-slate-500 outline-none cursor-not-allowed font-semibold" />
             </div>
 
             <div>

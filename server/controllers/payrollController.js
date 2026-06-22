@@ -190,9 +190,7 @@ exports.downloadPayslip = async (req, res, next) => {
       return sendResponse(res, 403, false, 'Forbidden: You cannot access this payslip');
     }
 
-    const settings = await CompanySettings.findOne();
-    const currency = settings?.currency || 'PKR';
-    const doc = generatePayslipPdf(payroll, currency);
+    const doc = generatePayslipPdf(payroll);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=payslip_${payroll.year}_${payroll.month}.pdf`);
