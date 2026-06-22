@@ -458,10 +458,10 @@ onMounted(async () => {
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1.5">Salary Band</label>
             <select v-model="form.salaryBand" class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white cursor-pointer">
-              <option value="Band A">Band A ({{ currencySymbol }}10,000)</option>
-              <option value="Band B">Band B ({{ currencySymbol }}6,000)</option>
-              <option value="Band C">Band C ({{ currencySymbol }}4,000)</option>
-              <option value="Band D">Band D ({{ currencySymbol }}2,500)</option>
+              <option value="Band A">Band A ({{ currencySymbol }}150,000)</option>
+              <option value="Band B">Band B ({{ currencySymbol }}100,000)</option>
+              <option value="Band C">Band C ({{ currencySymbol }}70,000)</option>
+              <option value="Band D">Band D ({{ currencySymbol }}40,000)</option>
             </select>
           </div>
         </div>

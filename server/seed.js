@@ -299,9 +299,9 @@ const seedDB = async () => {
     const pMonth = lastMonth.getMonth() + 1;
     const pYear = lastMonth.getFullYear();
 
-    const bandsSalary = { 'Band A': 10000, 'Band B': 6000, 'Band C': 4000, 'Band D': 2500 };
+    const bandsSalary = { 'Band A': 150000, 'Band B': 100000, 'Band C': 70000, 'Band D': 40000 };
     for (const emp of allEmployees) {
-      const basic = bandsSalary[emp.salaryBand] || 3000;
+      const basic = bandsSalary[emp.salaryBand] || 50000;
       const allowances = [
         { name: 'Housing Allowance', amount: Math.round(basic * 0.1) },
         { name: 'Transport Allowance', amount: Math.round(basic * 0.05) }

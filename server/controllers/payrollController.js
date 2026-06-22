@@ -7,12 +7,12 @@ const sendResponse = require('../utils/apiResponse');
 // Helper to determine basic salary from band
 const getBasicSalaryFromBand = (band) => {
   const bands = {
-    'Band A': 10000,
-    'Band B': 6000,
-    'Band C': 4000,
-    'Band D': 2500,
+    'Band A': 150000,
+    'Band B': 100000,
+    'Band C': 70000,
+    'Band D': 40000,
   };
-  return bands[band] || 3000;
+  return bands[band] || 50000;
 };
 
 // GET /api/payroll/run - Review/draft payroll calculations for all employees
