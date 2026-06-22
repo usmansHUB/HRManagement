@@ -15,6 +15,7 @@ const timesheets = ref([]);
 const pendingReviews = ref([]);
 const isLoading = ref(false);
 const activeTab = ref('log'); // 'log' | 'review'
+const configuredProjects = ref([]);
 
 // Target week start (Monday)
 const selectedWeekStart = ref('');
@@ -170,10 +171,22 @@ watch(activeTab, (tab) => {
   }
 });
 
+const fetchConfiguredProjects = async () => {
+  try {
+    const { data } = await api.get('/settings/projects?status=active');
+    if (data.success) {
+      configuredProjects.value = data.data;
+    }
+  } catch (err) {
+    console.error('Failed to load configured projects:', err);
+  }
+};
+
 onMounted(() => {
   setInitialWeek();
   loadWeeklyTimesheet();
   loadPendingReviews();
+  fetchConfiguredProjects();
 });
 </script>
 
@@ -252,13 +265,15 @@ onMounted(() => {
           <tbody class="divide-y divide-brand-border/30">
             <tr v-for="(row, idx) in projectsList" :key="idx" class="group">
               <td class="py-3 pr-2">
-                <input 
-                  type="text" 
+                <select 
                   v-model="row.project" 
-                  placeholder="e.g. OrangeHRM Portal"
                   :disabled="['submitted', 'approved'].includes(timesheetStatus)"
-                  class="w-full bg-[#0E1322]/50 border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-brand-blue"
-                />
+                  class="w-full bg-[#0E1322]/50 border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-brand-blue cursor-pointer"
+                >
+                  <option value="" disabled>Select Project</option>
+                  <option v-for="p in configuredProjects" :key="p._id" :value="p.name">{{ p.name }}</option>
+                  <option v-if="configuredProjects.length === 0" disabled>No active projects found.</option>
+                </select>
               </td>
               <td class="py-3 pr-2">
                 <input 

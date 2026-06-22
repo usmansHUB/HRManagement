@@ -116,6 +116,11 @@ const router = createRouter({
           path: 'buzz',
           name: 'Buzz',
           component: () => import('../pages/Buzz.vue'),
+        },
+        {
+          path: 'discipline',
+          name: 'Discipline',
+          component: () => import('../pages/Discipline.vue'),
         }
       ]
     },

@@ -16,6 +16,9 @@ router.put('/company', checkRole(['Super Admin']), upload.single('logo'), settin
 router.get('/departments', settingsController.getDepartments);
 router.post('/departments', checkRole(['Super Admin', 'HR Manager']), settingsController.createDepartment);
 router.put('/departments/:id', checkRole(['Super Admin', 'HR Manager']), settingsController.updateDepartment);
-router.delete('/departments/:id', checkRole(['Super Admin', 'HR Manager']), settingsController.deleteDepartment);
+// Projects CRUD
+router.get('/projects', settingsController.getProjects);
+router.post('/projects', checkRole(['Super Admin', 'HR Manager']), settingsController.createProject);
+router.delete('/projects/:id', checkRole(['Super Admin', 'HR Manager']), settingsController.deleteProject);
 
 module.exports = router;

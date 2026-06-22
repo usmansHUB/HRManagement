@@ -7,7 +7,7 @@ import { useToast } from '../composables/useToast';
 import HrmButton from '../components/ui/HrmButton.vue';
 import HrmModal from '../components/ui/HrmModal.vue';
 import HrmTable from '../components/ui/HrmTable.vue';
-import { Settings, Save, Plus, HelpCircle, Edit3, Trash2 } from 'lucide-vue-next';
+import { Settings, Save, Plus, HelpCircle, Edit3, Trash2, Briefcase } from 'lucide-vue-next';
 
 const settingsStore = useSettingsStore();
 const employeeStore = useEmployeeStore();
@@ -34,6 +34,7 @@ const leaveTypeForm = ref({ name: '', defaultDays: 15, carryForward: false, isPa
 
 const companySettings = computed(() => settingsStore.companySettings);
 const departments = computed(() => settingsStore.departments);
+const projects = computed(() => settingsStore.projects);
 const leaveTypes = computed(() => leaveStore.leaveTypes);
 const employees = computed(() => employeeStore.employees);
 const isLoading = computed(() => settingsStore.isLoading);
@@ -48,6 +49,7 @@ const loadSettingsData = async () => {
     };
   }
   await settingsStore.fetchDepartments();
+  await settingsStore.fetchProjects();
   await employeeStore.fetchEmployees({ limit: 100 });
   await leaveStore.fetchLeaveTypes();
 };
@@ -162,6 +164,35 @@ const handleDeleteLeaveType = async (id) => {
   if (result.success) {
     addToast('Leave category deleted successfully.', 'success');
     leaveStore.fetchLeaveTypes();
+  } else {
+    addToast(result.message, 'error');
+  }
+};
+const showProjectModal = ref(false);
+const projectForm = ref({ name: '', clientName: '', description: '', status: 'active' });
+
+const openAddProject = () => {
+  projectForm.value = { name: '', clientName: '', description: '', status: 'active' };
+  showProjectModal.value = true;
+};
+
+const submitProjectForm = async () => {
+  const result = await settingsStore.createProject(projectForm.value);
+  if (result.success) {
+    addToast('Client project created successfully!', 'success');
+    showProjectModal.value = false;
+    await settingsStore.fetchProjects();
+  } else {
+    addToast(result.message, 'error');
+  }
+};
+
+const handleDeleteProject = async (id) => {
+  if (!confirm('Are you sure you want to delete this project?')) return;
+  const result = await settingsStore.deleteProject(id);
+  if (result.success) {
+    addToast('Project deleted successfully.', 'success');
+    await settingsStore.fetchProjects();
   } else {
     addToast(result.message, 'error');
   }
@@ -300,6 +331,41 @@ onMounted(() => {
             </template>
           </HrmTable>
         </div>
+
+        <!-- Client Projects Card -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-md font-bold text-white flex items-center gap-2">
+              <Briefcase class="w-5 h-5 text-brand-blue" />
+              Client Projects
+            </h3>
+            <HrmButton variant="primary" @click="openAddProject">
+              <Plus class="w-4 h-4" />
+              Add Project
+            </HrmButton>
+          </div>
+
+          <HrmTable :headers="['Project Name', 'Client Name', 'Description', 'Status', 'Actions']" :items="projects">
+            <template #row="{ item }">
+              <td class="px-6 py-3.5 text-xs font-bold text-slate-100">{{ item.name }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-300">{{ item.clientName || '--' }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-400 max-w-[200px] truncate">{{ item.description || '--' }}</td>
+              <td class="px-6 py-3.5 text-xs text-slate-400 font-semibold font-mono">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold" 
+                      :class="item.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'">
+                  {{ item.status }}
+                </span>
+              </td>
+              <td class="px-6 py-3.5">
+                <div class="flex items-center gap-2">
+                  <button @click="handleDeleteProject(item._id)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer" title="Delete">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+            </template>
+          </HrmTable>
+        </div>
       </div>
 
     </div>
@@ -368,6 +434,39 @@ onMounted(() => {
         <div class="pt-4 flex justify-end gap-3 border-t border-brand-border/40">
           <HrmButton type="button" variant="secondary" @click="showLeaveTypeModal = false">Cancel</HrmButton>
           <HrmButton type="submit" variant="primary">Save Category</HrmButton>
+        </div>
+      </form>
+    </HrmModal>
+
+    <!-- Create Project Modal -->
+    <HrmModal :show="showProjectModal" title="Add Client Project" @close="showProjectModal = false" maxWidth="max-w-sm">
+      <form @submit.prevent="submitProjectForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Project Name</label>
+          <input type="text" v-model="projectForm.name" required placeholder="e.g. Vercel Redesign" class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white focus:border-brand-blue outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Client Name</label>
+          <input type="text" v-model="projectForm.clientName" placeholder="e.g. Vercel Inc." class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white focus:border-brand-blue outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5 font-mono">Description</label>
+          <textarea v-model="projectForm.description" placeholder="Project details..." class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white h-24 focus:border-brand-blue outline-none resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5 font-mono">Status</label>
+          <select v-model="projectForm.status" class="w-full bg-black/35 border border-brand-border rounded px-3 py-2 text-sm text-white cursor-pointer focus:border-brand-blue outline-none">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3 border-t border-brand-border/40">
+          <HrmButton type="button" variant="secondary" @click="showProjectModal = false">Cancel</HrmButton>
+          <HrmButton type="submit" variant="primary">Add Project</HrmButton>
         </div>
       </form>
     </HrmModal>

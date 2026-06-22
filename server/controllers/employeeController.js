@@ -230,6 +230,8 @@ exports.updateEmployee = async (req, res, next) => {
       salaryBand,
       status,
       email,
+      emergencyContacts,
+      dependents,
     } = req.body;
 
     // Self-update is restricted
@@ -263,6 +265,13 @@ exports.updateEmployee = async (req, res, next) => {
       if (joiningDate) {
         employee.joiningDate = joiningDate;
       }
+    }
+
+    if (emergencyContacts !== undefined) {
+      employee.emergencyContacts = Array.isArray(emergencyContacts) ? emergencyContacts : JSON.parse(emergencyContacts || '[]');
+    }
+    if (dependents !== undefined) {
+      employee.dependents = Array.isArray(dependents) ? dependents : JSON.parse(dependents || '[]');
     }
 
     // Update associated user's name if first/last name changed

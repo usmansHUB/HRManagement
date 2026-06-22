@@ -1,5 +1,6 @@
 const CompanySettings = require('../models/CompanySettings');
 const Department = require('../models/Department');
+const Project = require('../models/Project');
 const { uploadFile } = require('../config/cloudinary');
 const sendResponse = require('../utils/apiResponse');
 
@@ -110,6 +111,59 @@ exports.deleteDepartment = async (req, res, next) => {
       return sendResponse(res, 404, false, 'Department not found');
     }
     return sendResponse(res, 200, true, 'Department deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==================== Client Projects CRUD ====================
+
+exports.getProjects = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const projects = await Project.find(query).sort({ createdAt: -1 });
+    return sendResponse(res, 200, true, 'Projects retrieved successfully', projects);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createProject = async (req, res, next) => {
+  try {
+    const { name, clientName, description, status } = req.body;
+    if (!name) {
+      return sendResponse(res, 400, false, 'Project name is required');
+    }
+
+    const exists = await Project.findOne({ name });
+    if (exists) {
+      return sendResponse(res, 400, false, 'Project with this name already exists');
+    }
+
+    const project = new Project({
+      name,
+      clientName: clientName || '',
+      description: description || '',
+      status: status || 'active',
+    });
+
+    await project.save();
+    return sendResponse(res, 201, true, 'Project created successfully', project);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteProject = async (req, res, next) => {
+  try {
+    const project = await Project.findByIdAndDelete(req.params.id);
+    if (!project) {
+      return sendResponse(res, 404, false, 'Project not found');
+    }
+    return sendResponse(res, 200, true, 'Project deleted successfully');
   } catch (error) {
     next(error);
   }

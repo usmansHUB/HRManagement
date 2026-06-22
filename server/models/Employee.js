@@ -77,6 +77,16 @@ const EmployeeSchema = new mongoose.Schema({
       default: Date.now,
     }
   }],
+  emergencyContacts: [{
+    name: String,
+    relationship: String,
+    phone: String,
+  }],
+  dependents: [{
+    name: String,
+    relationship: String,
+    dob: Date,
+  }],
 }, {
   timestamps: true,
 });

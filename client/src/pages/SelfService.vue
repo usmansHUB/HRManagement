@@ -41,6 +41,10 @@ const profileForm = ref({
 const balances = ref([]);
 const leaves = ref([]);
 const payslips = ref([]);
+const emergencyContacts = ref([]);
+const dependents = ref([]);
+const newContact = ref({ name: '', relationship: '', phone: '' });
+const newDependent = ref({ name: '', relationship: '', dob: '' });
 
 const loadPortalData = async () => {
   if (!employeeId.value) return;
@@ -59,6 +63,8 @@ const loadPortalData = async () => {
         gender: emp.gender || 'Male',
         address: emp.address || '',
       };
+      emergencyContacts.value = emp.emergencyContacts || [];
+      dependents.value = emp.dependents || [];
     }
 
     // 2. Fetch leave balances
@@ -111,6 +117,47 @@ const triggerPayslipDownload = async (id) => {
   } catch (err) {
     addToast('Failed to download PDF.', 'error');
   }
+};
+
+const updateContactsAndDependents = async () => {
+  try {
+    const payload = {
+      emergencyContacts: emergencyContacts.value,
+      dependents: dependents.value,
+    };
+    await api.put(`/employees/${employeeId.value}`, payload);
+  } catch (err) {
+    console.error('Failed to sync contacts/dependents:', err);
+    addToast('Failed to synchronize updates with server.', 'error');
+  }
+};
+
+const addContact = async () => {
+  if (!newContact.value.name || !newContact.value.relationship || !newContact.value.phone) return;
+  emergencyContacts.value.push({ ...newContact.value });
+  newContact.value = { name: '', relationship: '', phone: '' };
+  await updateContactsAndDependents();
+  addToast('Emergency contact added successfully.', 'success');
+};
+
+const removeContact = async (idx) => {
+  emergencyContacts.value.splice(idx, 1);
+  await updateContactsAndDependents();
+  addToast('Emergency contact removed.', 'success');
+};
+
+const addDependent = async () => {
+  if (!newDependent.value.name || !newDependent.value.relationship || !newDependent.value.dob) return;
+  dependents.value.push({ ...newDependent.value });
+  newDependent.value = { name: '', relationship: '', dob: '' };
+  await updateContactsAndDependents();
+  addToast('Dependent added successfully.', 'success');
+};
+
+const removeDependent = async (idx) => {
+  dependents.value.splice(idx, 1);
+  await updateContactsAndDependents();
+  addToast('Dependent removed.', 'success');
 };
 
 onMounted(async () => {
@@ -184,6 +231,79 @@ onMounted(async () => {
               Save Portal Updates
             </HrmButton>
           </form>
+        </div>
+
+        <!-- Emergency Contacts & Dependents Card -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel space-y-6">
+          <div>
+            <h3 class="text-md font-bold text-white border-b border-brand-border/40 pb-3 mb-6 flex items-center gap-2">
+              <Phone class="w-5 h-5 text-brand-blue" />
+              Emergency Contacts
+            </h3>
+            
+            <div v-if="emergencyContacts.length === 0" class="text-xs text-slate-500 mb-4">
+              No emergency contacts registered.
+            </div>
+            <div v-else class="space-y-3 mb-4">
+              <div v-for="(c, idx) in emergencyContacts" :key="idx" class="flex justify-between items-center bg-black/25 p-3 rounded-lg border border-brand-border/40">
+                <div>
+                  <p class="text-xs font-bold text-white">{{ c.name }}</p>
+                  <p class="text-[10px] text-slate-400 font-medium">{{ c.relationship }} • {{ c.phone }}</p>
+                </div>
+                <button @click="removeContact(idx)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer">
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Contact Form -->
+            <form @submit.prevent="addContact" class="bg-black/10 border border-brand-border/30 p-3 rounded-lg space-y-3 mb-4">
+              <p class="text-[10px] font-bold text-slate-300 uppercase">Add New Contact</p>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" v-model="newContact.name" placeholder="Full Name" required class="bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none" />
+                <input type="text" v-model="newContact.relationship" placeholder="Relationship" required class="bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none" />
+              </div>
+              <div class="flex gap-2">
+                <input type="text" v-model="newContact.phone" placeholder="Phone Number" required class="flex-1 bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none" />
+                <HrmButton type="submit" variant="primary" class="py-1 px-3 text-xs">Add</HrmButton>
+              </div>
+            </form>
+          </div>
+
+          <div>
+            <h3 class="text-md font-bold text-white border-b border-brand-border/40 pb-3 mb-6 flex items-center gap-2">
+              <User class="w-5 h-5 text-brand-purple" />
+              My Dependents
+            </h3>
+
+            <div v-if="dependents.length === 0" class="text-xs text-slate-500 mb-4">
+              No dependents registered.
+            </div>
+            <div v-else class="space-y-3 mb-4">
+              <div v-for="(d, idx) in dependents" :key="idx" class="flex justify-between items-center bg-black/25 p-3 rounded-lg border border-brand-border/40">
+                <div>
+                  <p class="text-xs font-bold text-white">{{ d.name }}</p>
+                  <p class="text-[10px] text-slate-400 font-medium">{{ d.relationship }} • Born {{ d.dob ? new Date(d.dob).toLocaleDateString() : 'N/A' }}</p>
+                </div>
+                <button @click="removeDependent(idx)" class="text-xs text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-500/10 rounded cursor-pointer">
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <!-- Add Dependent Form -->
+            <form @submit.prevent="addDependent" class="bg-black/10 border border-brand-border/30 p-3 rounded-lg space-y-3">
+              <p class="text-[10px] font-bold text-slate-300 uppercase">Add New Dependent</p>
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" v-model="newDependent.name" placeholder="Full Name" required class="bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none" />
+                <input type="text" v-model="newDependent.relationship" placeholder="Relationship" required class="bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none" />
+              </div>
+              <div class="flex gap-2">
+                <input type="date" v-model="newDependent.dob" required class="flex-1 bg-[#0E1322] border border-brand-border rounded px-2.5 py-1.5 text-xs text-white outline-none cursor-pointer" />
+                <HrmButton type="submit" variant="purple" class="py-1 px-3 text-xs">Add</HrmButton>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
 

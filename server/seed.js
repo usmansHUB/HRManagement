@@ -15,6 +15,8 @@ const Review = require('./models/Review');
 const Course = require('./models/Course');
 const CourseAssignment = require('./models/CourseAssignment');
 const CompanySettings = require('./models/CompanySettings');
+const Project = require('./models/Project');
+const DisciplineCase = require('./models/DisciplineCase');
 
 const seedDB = async () => {
   try {
@@ -38,6 +40,8 @@ const seedDB = async () => {
     await Course.deleteMany({});
     await CourseAssignment.deleteMany({});
     await CompanySettings.deleteMany({});
+    await Project.deleteMany({});
+    await DisciplineCase.deleteMany({});
 
     console.log('Database cleared! Seeding Company Settings...');
     const settings = new CompanySettings({
@@ -458,6 +462,51 @@ const seedDB = async () => {
       status: 'Completed',
       completedAt: new Date(),
     });
+
+    console.log('Seeding Projects...');
+    const project1 = await Project.create({
+      name: 'Vercel Redesign',
+      clientName: 'Vercel Inc.',
+      description: 'Complete UI redesign of Vercel platform.',
+      status: 'active'
+    });
+    const project2 = await Project.create({
+      name: 'OrangeHRM Portal integration',
+      clientName: 'OrangeHRM Ltd.',
+      description: 'Clone and synchronize features with OrangeHRM dashboard.',
+      status: 'active'
+    });
+    const project3 = await Project.create({
+      name: 'Old legacy archive migration',
+      clientName: 'Internal',
+      description: 'Migrating legacy cold data.',
+      status: 'inactive'
+    });
+
+    console.log('Seeding Emergency Contacts & Dependents...');
+    if (regularEmployees.length > 0) {
+      regularEmployees[0].emergencyContacts = [{ name: 'Mary Miller', relationship: 'Spouse', phone: '+1 555-9000' }];
+      regularEmployees[0].dependents = [{ name: 'Tommy Miller', relationship: 'Child', dob: new Date('2018-05-12') }];
+      await regularEmployees[0].save();
+    }
+
+    console.log('Seeding Disciplinary Cases...');
+    if (regularEmployees.length > 2) {
+      await DisciplineCase.create({
+        employeeId: regularEmployees[1]._id,
+        title: 'Repeated Tardiness',
+        description: 'The employee was late 3 times this week without prior notification.',
+        actionTaken: 'First verbal warning issued',
+        status: 'active'
+      });
+      await DisciplineCase.create({
+        employeeId: regularEmployees[2]._id,
+        title: 'Policy violation',
+        description: 'Sharing corporate confidential details externally.',
+        actionTaken: 'Written warning issued & review completed.',
+        status: 'resolved'
+      });
+    }
 
     console.log('=========================================');
     console.log('DATABASE SEEDED SUCCESSFULLY!');

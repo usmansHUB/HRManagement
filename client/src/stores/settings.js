@@ -5,6 +5,7 @@ export const useSettingsStore = defineStore('settings', {
   state: () => ({
     companySettings: null,
     departments: [],
+    projects: [],
     isLoading: false,
   }),
 
@@ -91,6 +92,48 @@ export const useSettingsStore = defineStore('settings', {
         return {
           success: false,
           message: error.response?.data?.message || 'Failed to delete department.',
+        };
+      }
+    },
+
+    async fetchProjects() {
+      this.isLoading = true;
+      try {
+        const { data } = await api.get('/settings/projects');
+        if (data.success) {
+          this.projects = data.data;
+        }
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async createProject(payload) {
+      try {
+        const { data } = await api.post('/settings/projects', payload);
+        if (data.success) {
+          this.projects.push(data.data);
+          return { success: true };
+        }
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to create project.',
+        };
+      }
+    },
+
+    async deleteProject(id) {
+      try {
+        await api.delete(`/settings/projects/${id}`);
+        this.projects = this.projects.filter(p => p._id !== id);
+        return { success: true };
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Failed to delete project.',
         };
       }
     },

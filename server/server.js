@@ -23,6 +23,7 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const buzzRoutes = require('./routes/buzzRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const timesheetRoutes = require('./routes/timesheetRoutes');
+const disciplineRoutes = require('./routes/disciplineRoutes');
 
 // Initialize app
 const app = express();
@@ -88,6 +89,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/buzz', buzzRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/timesheets', timesheetRoutes);
+app.use('/api/discipline', disciplineRoutes);
 
 // Base route
 app.get('/', (req, res) => {

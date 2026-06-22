@@ -75,6 +75,43 @@ onMounted(() => {
             </div>
           </div>
         </div>
+
+        <!-- Emergency Contacts & Dependents Details -->
+        <div class="p-6 rounded-xl border border-brand-border/60 bg-brand-card/30 glass-panel space-y-6 text-left">
+          <div>
+            <h3 class="text-xs font-bold text-white border-b border-brand-border/40 pb-2.5 mb-4 uppercase tracking-wider flex items-center gap-2">
+              <Phone class="w-4 h-4 text-brand-blue" />
+              Emergency Contacts
+            </h3>
+            
+            <div v-if="!employee.emergencyContacts || employee.emergencyContacts.length === 0" class="text-xs text-slate-500">
+              No emergency contacts registered.
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="(c, idx) in employee.emergencyContacts" :key="idx" class="bg-black/25 p-3 rounded-lg border border-brand-border/40 text-xs">
+                <p class="font-bold text-white">{{ c.name }}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ c.relationship }} • {{ c.phone }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-xs font-bold text-white border-b border-brand-border/40 pb-2.5 mb-4 uppercase tracking-wider flex items-center gap-2">
+              <User class="w-4 h-4 text-brand-purple" />
+              Dependents
+            </h3>
+
+            <div v-if="!employee.dependents || employee.dependents.length === 0" class="text-xs text-slate-500">
+              No dependents registered.
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="(d, idx) in employee.dependents" :key="idx" class="bg-black/25 p-3 rounded-lg border border-brand-border/40 text-xs">
+                <p class="font-bold text-white">{{ d.name }}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ d.relationship }} • Born {{ d.dob ? new Date(d.dob).toLocaleDateString() : 'N/A' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Right side: Work details & files -->

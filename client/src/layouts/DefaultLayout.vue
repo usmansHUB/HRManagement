@@ -7,7 +7,7 @@ import HeaderCanvas from '../components/three/HeaderCanvas.vue';
 import { 
   LayoutDashboard, Users, Calendar, DollarSign, 
   Briefcase, Award, BookOpen, Settings, User, LogOut, Sun, Moon,
-  Menu, X, Bell, ChevronDown, Clock, Receipt, MessageSquare
+  Menu, X, Bell, ChevronDown, Clock, Receipt, MessageSquare, ShieldAlert
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -52,6 +52,7 @@ const pageTitle = computed(() => {
     Lnd: 'Learning & Development',
     SelfService: 'My Portal',
     Settings: 'System Settings',
+    Discipline: 'Discipline Cases',
   };
   return titles[name] || name;
 });
@@ -69,6 +70,7 @@ const menuItems = computed(() => {
     { name: 'Performance', path: '/performance', icon: Award, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Training (L&D)', path: '/lnd', icon: BookOpen, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Company Buzz', path: '/buzz', icon: MessageSquare, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
+    { name: 'Discipline Cases', path: '/discipline', icon: ShieldAlert, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'My Portal', path: '/self-service', icon: User, roles: ['Employee'] },
     { name: 'System Settings', path: '/settings', icon: Settings, roles: ['Super Admin'] },
   ];
