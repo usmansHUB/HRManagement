@@ -7,7 +7,7 @@ import HeaderCanvas from '../components/three/HeaderCanvas.vue';
 import { 
   LayoutDashboard, Users, Calendar, DollarSign, 
   Briefcase, Award, BookOpen, Settings, User, LogOut, Sun, Moon,
-  Menu, X, Bell, ChevronDown
+  Menu, X, Bell, ChevronDown, Clock, Receipt, MessageSquare
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -62,10 +62,13 @@ const menuItems = computed(() => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Employees', path: '/employees', icon: Users, roles: ['Super Admin', 'HR Manager', 'Department Manager'] },
     { name: 'Attendance & Leaves', path: '/attendance', icon: Calendar, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
+    { name: 'Weekly Timesheets', path: '/timesheets', icon: Clock, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
+    { name: 'Expense Claims', path: '/expenses', icon: Receipt, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Payroll', path: '/payroll', icon: DollarSign, roles: ['Super Admin', 'HR Manager'] },
     { name: 'Recruitment', path: '/recruitment', icon: Briefcase, roles: ['Super Admin', 'HR Manager'] },
     { name: 'Performance', path: '/performance', icon: Award, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'Training (L&D)', path: '/lnd', icon: BookOpen, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
+    { name: 'Company Buzz', path: '/buzz', icon: MessageSquare, roles: ['Super Admin', 'HR Manager', 'Department Manager', 'Employee'] },
     { name: 'My Portal', path: '/self-service', icon: User, roles: ['Employee'] },
     { name: 'System Settings', path: '/settings', icon: Settings, roles: ['Super Admin'] },
   ];

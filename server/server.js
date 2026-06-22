@@ -20,6 +20,9 @@ const performanceRoutes = require('./routes/performanceRoutes');
 const lndRoutes = require('./routes/lndRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const buzzRoutes = require('./routes/buzzRoutes');
+const expenseRoutes = require('./routes/expenseRoutes');
+const timesheetRoutes = require('./routes/timesheetRoutes');
 
 // Initialize app
 const app = express();
@@ -82,6 +85,9 @@ app.use('/api/performance', performanceRoutes);
 app.use('/api/lnd', lndRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/buzz', buzzRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/timesheets', timesheetRoutes);
 
 // Base route
 app.get('/', (req, res) => {

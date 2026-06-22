@@ -101,6 +101,21 @@ const router = createRouter({
           name: 'Settings',
           component: () => import('../pages/Settings.vue'),
           meta: { allowedRoles: ['Super Admin'] },
+        },
+        {
+          path: 'timesheets',
+          name: 'Timesheets',
+          component: () => import('../pages/Timesheets.vue'),
+        },
+        {
+          path: 'expenses',
+          name: 'Expenses',
+          component: () => import('../pages/Expenses.vue'),
+        },
+        {
+          path: 'buzz',
+          name: 'Buzz',
+          component: () => import('../pages/Buzz.vue'),
         }
       ]
     },
